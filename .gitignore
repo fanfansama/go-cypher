@@ -1,0 +1,13 @@
+bin/
+pkg/
+src/golang.org
+src/github.com
+
+main
+
+
+in/
+out-dec/
+out-enc/
+enc/
+dec/

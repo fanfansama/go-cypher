@@ -1,0 +1,10 @@
+
+in/
+out-enc/
+out-dec/
+enc/
+dec/
+cypher
+
+.git/
+.gitignore

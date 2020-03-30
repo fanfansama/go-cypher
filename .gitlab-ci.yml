@@ -1,0 +1,54 @@
+variables:
+  DOCKER_DRIVER: overlay2
+  PSN_REGISTRY_IMAGE: registry.gitlab.com/ideafactory/nemmo/go-crypto
+
+
+stages:
+  - build
+  - deploy
+
+
+docker-build:
+  stage: build
+  only:
+    - master
+    - branches
+  script: 
+    - docker info
+    - echo $CI_BUILD_TOKEN | docker login registry.gitlab.com -u gitlab-ci-token --password-stdin
+    - IMAGE_TAG=$PSN_REGISTRY_IMAGE:latest
+    - docker build -t $IMAGE_TAG . 
+    - docker push $IMAGE_TAG
+    - echo $IMAGE_TAG
+  tags:
+  - shell-nemmo
+
+
+docker-build_release_tag:
+  stage: build
+  only:
+    - tags
+  script: 
+    - docker info
+    - echo $CI_BUILD_TOKEN | docker login registry.gitlab.com -u gitlab-ci-token --password-stdin
+    - echo $CI_COMMIT_TAG
+    - IMAGE_TAG=$PSN_REGISTRY_IMAGE:$CI_COMMIT_TAG
+    - docker build -t $IMAGE_TAG . 
+    - docker push $IMAGE_TAG
+    - echo $IMAGE_TAG
+  tags:
+  - shell-nemmo
+
+
+kubectl-apply:
+  stage: deploy
+  image: registry.gitlab.com/ideafactory/nemmo/devops/docker/kubectl:latest
+  script:
+    - cd /workspace
+    - git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/IdeaFactory/NEMMO/devops/kubernetes.git
+    - cd kubernetes
+    - . ./setClusterNemmoDev.sh
+    - ./60-sed-nemmo.sh latest
+    - kubectl apply -f nemmo/05-ged/ 
+  tags:
+    - dind
